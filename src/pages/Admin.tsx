@@ -10,9 +10,9 @@ import {
   ArrowLeft,
   RefreshCw,
   Send,
-  CheckCircle,
-  XCircle,
-  Loader2
+  Loader2,
+  LogOut,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Appointment {
   id: string;
@@ -72,6 +73,7 @@ const statusOptions = [
 
 const Admin = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
@@ -100,6 +102,11 @@ const Admin = () => {
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   const updateStatus = async (id: string, newStatus: string) => {
     setIsUpdating(id);
@@ -148,7 +155,6 @@ const Admin = () => {
       setSendEmailDialog(null);
       setZoomLink("");
 
-      // Update status to confirmed if zoom link provided
       if (zoomLink) {
         await updateStatus(sendEmailDialog.id, "confirmed");
       }
@@ -194,14 +200,25 @@ const Admin = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <p className="text-muted-foreground">Manage appointment bookings</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  Logged in as {user?.email}
+                </p>
               </div>
             </div>
-            <Button onClick={fetchAppointments} variant="outline">
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={fetchAppointments} variant="outline">
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <Button onClick={handleSignOut} variant="outline">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
