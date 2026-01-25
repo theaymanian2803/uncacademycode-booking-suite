@@ -147,6 +147,16 @@ const Login = () => {
               </Button>
             </form>
           </Form>
+
+          <p className="text-xs text-muted-foreground text-center mt-6">
+            Need to create an admin account?{" "}
+            <button
+              onClick={() => navigate("/admin-setup")}
+              className="text-primary hover:underline"
+            >
+              Set up admin
+            </button>
+          </p>
         </div>
       </div>
     </div>
