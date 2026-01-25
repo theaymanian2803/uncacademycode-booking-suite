@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "resend";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,37 +7,34 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface AppointmentPayload {
-  type: "INSERT";
-  table: "appointments";
-  record: {
-    id: string;
-    created_at: string;
-    client_name: string;
-    client_email: string;
-    project_type: string;
-    scheduled_time: string;
-    notes: string | null;
-    status: string;
-  };
-  schema: "public";
+interface BookingEmailRequest {
+  clientName: string;
+  clientEmail: string;
+  projectType: string;
+  scheduledTime: string;
+  notes: string | null;
+  zoomLink?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const payload: AppointmentPayload = await req.json();
-    const { record } = payload;
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+
+    const resend = new Resend(RESEND_API_KEY);
+    const { clientName, clientEmail, projectType, scheduledTime, notes, zoomLink }: BookingEmailRequest = await req.json();
 
     // Admin emails to notify
     const adminEmails = ["uncacademycode@gmail.com", "sberechou@gmail.com"];
 
     // Format the scheduled time
-    const scheduledDate = new Date(record.scheduled_time);
+    const scheduledDate = new Date(scheduledTime);
     const formattedDate = scheduledDate.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -48,79 +46,93 @@ const handler = async (req: Request): Promise<Response> => {
       minute: "2-digit",
     });
 
-    // Email content
-    const emailContent = {
+    // Send notification to admins
+    const adminEmailResponse = await resend.emails.send({
+      from: "UncAcademyCode <onboarding@resend.dev>",
       to: adminEmails,
-      subject: `New Booking: ${record.client_name} - ${record.project_type}`,
+      subject: `New Booking: ${clientName} - ${projectType}`,
       html: `
-        <h1>New Appointment Booking</h1>
-        <p>A new consultation has been scheduled:</p>
-        <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Client Name</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">${record.client_name}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Email</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">${record.client_email}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Project Type</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">${record.project_type}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Scheduled Date</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">${formattedDate}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Scheduled Time</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">${formattedTime}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Notes</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">${record.notes || "No additional notes"}</td>
-          </tr>
-        </table>
-        <p style="margin-top: 20px; color: #666;">
-          Remember to send the Zoom link to <a href="mailto:${record.client_email}">${record.client_email}</a>
-        </p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #4f46e5;">New Appointment Booking</h1>
+          <p>A new consultation has been scheduled:</p>
+          <table style="border-collapse: collapse; width: 100%;">
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Client Name</strong></td>
+              <td style="padding: 12px; border: 1px solid #e5e7eb;">${clientName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Email</strong></td>
+              <td style="padding: 12px; border: 1px solid #e5e7eb;"><a href="mailto:${clientEmail}">${clientEmail}</a></td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Project Type</strong></td>
+              <td style="padding: 12px; border: 1px solid #e5e7eb;">${projectType}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Scheduled Date</strong></td>
+              <td style="padding: 12px; border: 1px solid #e5e7eb;">${formattedDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Scheduled Time</strong></td>
+              <td style="padding: 12px; border: 1px solid #e5e7eb;">${formattedTime}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Notes</strong></td>
+              <td style="padding: 12px; border: 1px solid #e5e7eb;">${notes || "No additional notes"}</td>
+            </tr>
+          </table>
+          <p style="margin-top: 20px; color: #6b7280;">
+            Please send a Zoom link to the client at <a href="mailto:${clientEmail}">${clientEmail}</a>
+          </p>
+        </div>
       `,
-    };
-
-    console.log("New booking received:", {
-      clientName: record.client_name,
-      clientEmail: record.client_email,
-      projectType: record.project_type,
-      scheduledTime: record.scheduled_time,
     });
 
-    // TODO: Integrate with Resend or another email service
-    // For now, we log the email content
-    console.log("Email to be sent:", emailContent);
+    console.log("Admin notification sent:", adminEmailResponse);
 
-    // To enable email sending, add RESEND_API_KEY secret and uncomment:
-    /*
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (RESEND_API_KEY) {
-      const resend = new Resend(RESEND_API_KEY);
-      await resend.emails.send({
-        from: "UncAcademyCode <noreply@your-domain.com>",
-        to: adminEmails,
-        subject: emailContent.subject,
-        html: emailContent.html,
-      });
-    }
-    */
+    // Send confirmation to client
+    const clientEmailResponse = await resend.emails.send({
+      from: "UncAcademyCode <onboarding@resend.dev>",
+      to: [clientEmail],
+      subject: "Booking Confirmed - UncAcademyCode Consultation",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #4f46e5;">Booking Confirmed! 🎉</h1>
+          <p>Hi ${clientName},</p>
+          <p>Thank you for booking a consultation with UncAcademyCode. We're excited to discuss your ${projectType} project!</p>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #374151;">Session Details</h3>
+            <p><strong>Date:</strong> ${formattedDate}</p>
+            <p><strong>Time:</strong> ${formattedTime}</p>
+            <p><strong>Project Type:</strong> ${projectType}</p>
+            ${zoomLink ? `<p><strong>Zoom Link:</strong> <a href="${zoomLink}">${zoomLink}</a></p>` : ''}
+          </div>
+          
+          ${!zoomLink ? '<p style="color: #6b7280;">You will receive a Zoom meeting link shortly before your scheduled session.</p>' : ''}
+          
+          <p>If you have any questions, feel free to reply to this email.</p>
+          
+          <p>Best regards,<br>The UncAcademyCode Team</p>
+        </div>
+      `,
+    });
+
+    console.log("Client confirmation sent:", clientEmailResponse);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Booking notification processed" }),
+      JSON.stringify({ 
+        success: true, 
+        adminEmail: adminEmailResponse,
+        clientEmail: clientEmailResponse 
+      }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   } catch (error: unknown) {
-    console.error("Error processing booking notification:", error);
+    console.error("Error sending booking emails:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       {

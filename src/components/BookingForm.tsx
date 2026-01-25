@@ -87,8 +87,19 @@ const BookingForm = () => {
 
       if (error) throw error;
 
+      // Send confirmation emails via edge function
+      await supabase.functions.invoke("send-booking-email", {
+        body: {
+          clientName: data.name,
+          clientEmail: data.email,
+          projectType: data.projectType,
+          scheduledTime: scheduledDateTime.toISOString(),
+          notes: data.notes || null,
+        },
+      });
+
       toast.success("Booking Confirmed!", {
-        description: "You'll receive a Zoom link at your email shortly.",
+        description: "You'll receive a confirmation email shortly.",
       });
 
       form.reset();
