@@ -35,7 +35,18 @@ import { supabase } from "@/integrations/supabase/client";
 const bookingSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
   email: z.string().email("Please enter a valid email address").max(255, "Email is too long"),
-  projectType: z.enum(["SaaS", "E-commerce", "Portfolio"], {
+  projectType: z.enum([
+    "Consultation",
+    "SaaS",
+    "E-commerce",
+    "Portfolio",
+    "Static",
+    "Landing Page",
+    "Business",
+    "Blog",
+    "Appointment System",
+    "Other"
+  ], {
     required_error: "Please select a project type",
   }),
   scheduledDate: z.date({
@@ -186,10 +197,17 @@ const BookingForm = () => {
                             <SelectValue placeholder="Select project type" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="bg-background border-border">
+                          <SelectItem value="Consultation">General Consultation</SelectItem>
                           <SelectItem value="SaaS">SaaS Application</SelectItem>
                           <SelectItem value="E-commerce">E-commerce Platform</SelectItem>
                           <SelectItem value="Portfolio">Portfolio Website</SelectItem>
+                          <SelectItem value="Static">Static Website</SelectItem>
+                          <SelectItem value="Landing Page">Landing Page</SelectItem>
+                          <SelectItem value="Business">Business Website</SelectItem>
+                          <SelectItem value="Blog">Blog / Content Site</SelectItem>
+                          <SelectItem value="Appointment System">Appointment Booking System</SelectItem>
+                          <SelectItem value="Other">Other / Custom Project</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
