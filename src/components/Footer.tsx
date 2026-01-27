@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Code2, Mail } from "lucide-react";
 
 const Footer = () => {
@@ -42,6 +43,12 @@ const Footer = () => {
               >
                 FAQ
               </button>
+              <Link
+                to="/about"
+                className="text-muted-foreground hover:text-foreground transition-colors text-left"
+              >
+                About Us
+              </Link>
             </nav>
           </div>
 

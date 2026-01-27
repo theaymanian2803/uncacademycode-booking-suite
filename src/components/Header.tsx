@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Code2, Menu, X } from "lucide-react";
 
@@ -47,6 +48,12 @@ const Header = ({ onBookNowClick }: HeaderProps) => {
             >
               FAQ
             </button>
+            <Link
+              to="/about"
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+            >
+              About Us
+            </Link>
           </nav>
 
           {/* Desktop CTA */}
@@ -95,6 +102,13 @@ const Header = ({ onBookNowClick }: HeaderProps) => {
               >
                 FAQ
               </button>
+              <Link
+                to="/about"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-left text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+              >
+                About Us
+              </Link>
               <Button
                 onClick={() => {
                   onBookNowClick();
