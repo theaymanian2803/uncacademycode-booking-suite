@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import TeamSection from "@/components/TeamSection";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Target, Zap, Shield, Code2, Rocket } from "lucide-react";
 
@@ -175,6 +176,9 @@ const AboutUs = () => {
             </div>
           </div>
         </section>
+
+        {/* Team Section */}
+        <TeamSection />
 
         {/* CTA Section */}
         <section className="py-16 sm:py-20">
